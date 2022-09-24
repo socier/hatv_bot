@@ -1,4 +1,3 @@
-from this import d
 import pymssql
 import pandas as pd
 import telegram
@@ -6,6 +5,7 @@ import telegram
 # TELEGRAM 관련 설정
 TELEGRAM_TOKEN = '5489889627:AAGTTR95UBCkFw3oSIqTP9Ybto8dc1iyopk'   # hatv_bot
 TELEGRAM_CHAT_ID = -1001533729786	# HATV 생산 채널
+#TELEGRAM_CHAT_ID = 26288969 #JSLim
 
 bot = telegram.Bot(token = TELEGRAM_TOKEN)
 
@@ -50,25 +50,29 @@ def prod_info():
 		msg += f'{work_dt:%Y-%m-%d} 전체 생산 현황\n'
 		msg += f'BD : {bd:,.0f}  VC : {vc:,.0f}\nNG : {ng:,.0f}  {ngsr:.1f}% \n'
 
-	msg += '----------------------------------\n'
+	send_telegram(msg)
+
+
+
+def defect_info():
 
 	sql = 'exec mes..sp_bot_defect'
 	df = read_sql(sql)
 
-	#if len (df.index) < 1:
-	##	return
-#
-#	msg += 'TOP 5 DEFECT\n'
-#	msg += '----------------------------------\n'
-#
-#	for index, row in df.head(5).iterrows():
-#		msg += f'[{index + 1} : {row.qty:,.0f}] {row.u_etrto} {row.u_pattern}\n    {row.u_group3}\n'
-#
-#	msg += '----------------------------------\n'
+	if len (df.index) < 1:
+		return
 
-	#print(msg)
+	msg  = '----------------------------------\n'
+	msg += 'TOP 5 DEFECT\n'
+	msg += '----------------------------------\n'
+
+	for index, row in df.head(5).iterrows():
+		msg += f'[{index + 1} : {row.qty:,.0f}] {row.u_etrto} {row.u_pattern}\n    {row.u_group3}\n'
+
+	msg += '----------------------------------\n'
 	send_telegram(msg)
+
 
 if __name__ == '__main__':
 	prod_info()
-
+	defect_info()

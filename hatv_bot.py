@@ -5,7 +5,7 @@ import telegram
 # TELEGRAM 관련 설정
 TELEGRAM_TOKEN = '5489889627:AAGTTR95UBCkFw3oSIqTP9Ybto8dc1iyopk'   # hatv_bot
 TELEGRAM_CHAT_ID = -1001533729786	# HATV 생산 채널
-#TELEGRAM_CHAT_ID = 26288969 #JSLim
+# TELEGRAM_CHAT_ID = 26288969 #JSLim
 
 bot = telegram.Bot(token = TELEGRAM_TOKEN)
 
@@ -42,13 +42,17 @@ def prod_info():
 		return
 
 	msg = '----------------------------------\n'
-	msg += f'{work_dt:%Y-%m-%d} S{shift} 생산 현황\n'
-	msg += f'BD : {bds:,.0f}  VC : {vcs:,.0f}\nNG : {ngs:,.0f}  {ngr:.1f}% \n'
+	msg += f'{work_dt:%Y-%m-%d} Shift {shift}\n'
+	msg += '----------------------------------\n'
+	msg += f'BD : {bds:,.0f}  VC : {vcs:,.0f}\nNG : {ngs:,.0f}  {ngr:.2f}% \n'
 
 	if shift == 2:
 		msg += '----------------------------------\n'
-		msg += f'{work_dt:%Y-%m-%d} 전체 생산 현황\n'
-		msg += f'BD : {bd:,.0f}  VC : {vc:,.0f}\nNG : {ng:,.0f}  {ngsr:.1f}% \n'
+		msg += f'{work_dt:%Y-%m-%d} Total\n'
+		msg += '----------------------------------\n'
+		msg += f'BD : {bd:,.0f}  VC : {vc:,.0f}\nNG : {ng:,.0f}  {ngsr:.2f}% \n'
+
+	msg += '----------------------------------\n'
 
 	send_telegram(msg)
 

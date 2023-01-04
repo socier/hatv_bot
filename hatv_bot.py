@@ -1,5 +1,5 @@
-import pymssql
-import pandas
+import sqlalchemy
+import pandas as pd
 import telegram
 
 # TELEGRAM 관련 설정
@@ -13,30 +13,37 @@ def send_telegram(msg, nopreveiw='true'):
 	bot.sendMessage(chat_id = TELEGRAM_CHAT_ID, parse_mode='HTML', text=msg, disable_web_page_preview=nopreveiw)
 	print (msg)
 
-def read_sql(sql):
-	conn = pymssql.connect('10.12.11.219', 'sa', 'ptha**345', 'mes')
-	df = pandas.read_sql(sql, conn)
-	return df
-
 def prod_info():
 	sql = 'exec mes..sp_bot_prod'
-
-	df = read_sql(sql)
+	df = pd.read_sql(sql, engine)
 
 	if len (df.index) != 1:
 		return
 
-	work_dt = df.work_dt[0]
-	shift = df.work_shift[0]
-	bd = df.scan_bd[0]
-	vc = df.scan_vc[0]
-	ng = df.scan_df[0]
+	sr = df.squeeze()
+	work_dt = sr.work_dt
+	shift = sr.work_shift
+	bd = sr.scan_bd
+	vc = sr.scan_vc
+	ng = sr.scan_df
 	ngr = ng / vc * 100
+	tp = sr.scan_tp
+	te = sr.scan_te
+	bc = sr.scan_bc
+	tpr = sr.roll_tp
+	ter = sr.roll_te
+	bcr = sr.roll_bc
 
-	bds = df.scan_bd_shift[0]
-	vcs = df.scan_vc_shift[0]
-	ngs = df.scan_df_shift[0]
+	bds = sr.scan_bd_shift
+	vcs = sr.scan_vc_shift
+	ngs = sr.scan_df_shift
 	ngsr = ngs / vcs * 100
+	tps = sr.scan_tp_shift
+	tes = sr.scan_te_shift
+	bcs = sr.scan_bc_shift
+	tprs = sr.roll_tp_shift
+	ters = sr.roll_te_shift
+	bcrs = sr.roll_bc_shift
 
 	if bd < 1000:
 		return
@@ -44,13 +51,24 @@ def prod_info():
 	msg = '----------------------------------\n'
 	msg += f'{work_dt:%Y-%m-%d} Shift {shift}\n'
 	msg += '----------------------------------\n'
-	msg += f'BD : {bds:,.0f}  VC : {vcs:,.0f}\nNG : {ngs:,.0f}  {ngr:.2f}% \n'
+	msg += f'BD : {bds:6,.0f} pcs\n'
+	msg += f'VC : {vcs:6,.0f} pcs\n'
+	msg += f'NG : {ngs:6,.0f} pcs    {ngsr:,.2f} % \n'
+	if shift == 1:
+		msg += f'TP : {tprs:6,.0f}  {tps:7,.0f} m\n'
+	msg += f'EX : {ters:6,.0f} R   {tes:7,.0f} m\n'
+	msg += f'BC : {bcrs:6,.0f} R   {bcs:7,.0f} m\n'
 
 	if shift == 2:
 		msg += '----------------------------------\n'
 		msg += f'{work_dt:%Y-%m-%d} Total\n'
 		msg += '----------------------------------\n'
-		msg += f'BD : {bd:,.0f}  VC : {vc:,.0f}\nNG : {ng:,.0f}  {ngsr:.2f}% \n'
+		msg += f'BD : {bd:6,.0f} pcs\n'
+		msg += f'VC : {vc:6,.0f} pcs\n'
+		msg += f'NG : {ng:6,.0f} pcs    {ngr:,.2f} % \n'
+		msg += f'TP : {tpr:6,.0f} R   {tp:7,.0f} m\n'
+		msg += f'EX : {ter:6,.0f} R   {te:7,.0f} m\n'
+		msg += f'BC : {bcr:6,.0f} R   {bc:7,.0f} m\n'
 
 	msg += '----------------------------------\n'
 
@@ -61,7 +79,7 @@ def prod_info():
 def defect_info():
 
 	sql = 'exec mes..sp_bot_defect'
-	df = read_sql(sql)
+	df = pd.read_sql(sql, engine)
 
 	if len (df.index) < 1:
 		return
@@ -78,5 +96,6 @@ def defect_info():
 
 
 if __name__ == '__main__':
+	engine = sqlalchemy.create_engine('mssql+pymssql://sa:ptha**345@10.12.11.219/pop')
 	prod_info()
 	defect_info()
